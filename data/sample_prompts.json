@@ -1,0 +1,22 @@
+[
+  {
+    "title": "Full Workshop Preparation",
+    "prompt": "Create tasks for preparing the upcoming workshop: book the catering for our attendees with the vegan and allergy specs, test the AV equipment in room 302, get the speaker slides, and print the attendee badges by next Wednesday."
+  },
+  {
+    "title": "Catering & Dietary Constraints",
+    "prompt": "Please organize all catering tasks for the workshop: order breakfast, lunch buffet, and snacks keeping in mind our vegan, vegetarian, and peanut allergy attendees. Make sure the head count is finalized 3 days before."
+  },
+  {
+    "title": "Technical Setup & AV Dry Run",
+    "prompt": "We need to prepare Room 302 for the workshop. Schedule tasks to inspect the 4K dual projectors, test both presenter lavalier mics, set up the 50 power strips, and configure the InnovationHub-5G Wi-Fi."
+  },
+  {
+    "title": "Speaker & Curriculum Coordination",
+    "prompt": "Set up tasks to collect 16:9 slide decks from Dr. Aris Thorne, Maya Lin, and Dev Patel, review their code repos for Docker compatibility, and upload the offline models to the USB drives."
+  },
+  {
+    "title": "Attendee Communications & Swag",
+    "prompt": "Urgent task: Send the prerequisite software email to all 45 attendees in 2 days, assemble the welcome kits with NFC badges, and prepare the post-event feedback survey."
+  }
+]

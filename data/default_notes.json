@@ -1,0 +1,51 @@
+[
+  {
+    "id": "note-workshop-overview",
+    "title": "Workshop Overview & Master Schedule",
+    "category": "Logistics",
+    "tags": ["schedule", "overview", "attendees", "milestone"],
+    "content": "The hands-on 'Agentic AI Systems in Production Workshop' is scheduled for Friday next week from 09:00 AM to 05:30 PM. 45 developers and engineers are registered. Event lead is Alex Vance, technical curriculum lead is Dr. Maya Lin. Key milestones: Final catering confirmation due 3 days before; AV check due 48 hours before; attendee email due 5 days before."
+  },
+  {
+    "id": "note-venue-av",
+    "title": "Venue Specifications & AV Equipment Checklist",
+    "category": "Venue & AV",
+    "tags": ["venue", "room302", "av", "projector", "microphones", "wifi"],
+    "content": "Location: Innovation Tech Center, Auditorium Room 302. Equipment requirements: Dual 4K laser projectors with HDMI and USB-C adapters, 2 wireless lavalier clip-on microphones for presenters, 1 handheld wireless microphone for audience Q&A, 50 grounded AC power strips along attendee desks. Dedicated Wi-Fi network: 'InnovationHub-5G' (WPA2 Passcode: AIWorkshop2026!). Full technical AV dry run must be completed at least 48 hours prior to workshop day."
+  },
+  {
+    "id": "note-catering-dietary",
+    "title": "Catering Service & Dietary Restrictions Specs",
+    "category": "Catering",
+    "tags": ["catering", "food", "lunch", "vegan", "vegetarian", "gluten-free", "allergies"],
+    "content": "Catering provider: GreenLeaf Artisanal Kitchen (contact: orders@greenleafkitchen.com, tel: 555-0192). Schedule: Light continental breakfast & specialty coffee at 8:15 AM, hot gourmet buffet lunch at 12:30 PM, afternoon energy snack & cold brew at 3:30 PM. Headcount: 45 attendees plus 5 staff (50 total). Strict dietary restrictions: 8 Vegetarian, 4 Strict Vegan (must be clearly labeled and boxed), 3 Gluten-Free, and 1 Severe Airborne Peanut Allergy (venue kitchen must adhere strictly to nut-free preparation protocol). Caterer contract requires final headcount sign-off 3 business days before event."
+  },
+  {
+    "id": "note-speakers-slides",
+    "title": "Guest Speakers & Curriculum Deliverables",
+    "category": "Content",
+    "tags": ["speakers", "slides", "presentation", "curriculum", "code-repo"],
+    "content": "Keynote and session speakers: Dr. Aris Thorne (Foundations of Multi-Agent Orchestration), Maya Lin (Fine-Tuning & Local LLMs), Dev Patel (Agentic Tool-Calling & Memory Stores). Slide submission guideline: All slide presentations must be 16:9 ratio, exported to both PDF and PPTX formats, submitted at least 4 days before the event for review and AV compatibility check. Hands-on GitHub repo 'ai-agentic-workshop-2026' must have Docker container images and DevContainer tested on Windows, Mac, and Linux."
+  },
+  {
+    "id": "note-attendee-kits",
+    "title": "Attendee Welcome Kits & Badges",
+    "category": "Logistics",
+    "tags": ["badges", "swag", "lanyard", "nfc", "workbook", "printing"],
+    "content": "Each attendee receives a personalized welcome kit: 1 NFC smart name badge with branded lanyard, 1 spiral-bound reference architecture cheat-sheet workbook, and 1 high-speed 64GB USB drive preloaded with offline Ollama model weights (Llama 3.2, all-MiniLM) and starter repos. Badge printing batch must be submitted to PrintPro Express 3 days prior, and physical kit assembly completed 24 hours before workshop."
+  },
+  {
+    "id": "note-comms-reminders",
+    "title": "Participant Communications & Pre-Event Checklist",
+    "category": "Marketing",
+    "tags": ["email", "reminder", "prerequisites", "survey", "participants"],
+    "content": "Communication schedule: T-5 days: Send tech prerequisite email (Python 3.11+, Docker Desktop, Git, VS Code installation instructions). T-24 hours: Send logistics email with building access QR codes, parking map, Room 302 directions, and schedule. T+2 hours post-event: Trigger anonymous satisfaction survey and issue digital completion certificates."
+  },
+  {
+    "id": "note-budget-accounting",
+    "title": "Budget Tracking & Expense Approvals",
+    "category": "Finance",
+    "tags": ["budget", "invoices", "expenses", "accounting"],
+    "content": "Approved budget code: MKT-WKSHP-2026. Total ceiling: $6,500. Catering allocated: $2,200. Venue AV hire: $1,800. Materials & kits: $1,500. Speaker honorariums & travel: $1,000. All receipts and signed purchase orders must be uploaded to the finance portal within 5 days of expense generation."
+  }
+]

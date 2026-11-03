@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskMind AI — Workshop Task Management Agent</title>
+  <meta name="description" content="Intelligent Agent that turns natural language workshop preparation requests into structured tasks using ChromaDB, all-MiniLM-L6-v2 embeddings, date parser, and priority classifier.">
+  
+  <!-- Modern Typography: Plus Jakarta Sans & JetBrains Mono for Code -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body class="dark-theme">
+  <!-- App Shell -->
+  <div class="app-layout">
+    <!-- Top Global Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="logo-box">
+          <div class="logo-icon-pulse">
+            <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+          </div>
+          <div class="logo-text">
+            <div class="brand-title">TaskMind <span class="gradient-text">AI Agent</span></div>
+            <div class="brand-subtitle">Workshop Task Management & Orchestration</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Vector DB & System Badges -->
+      <div class="header-center">
+        <div class="system-badge" id="badge-chromadb" title="ChromaDB Persistent Vector Store">
+          <span class="status-dot green-dot"></span>
+          <span class="badge-label">ChromaDB:</span>
+          <span class="badge-value" id="header-notes-count">7 Notes</span>
+        </div>
+        <div class="system-badge" id="badge-embeddings" title="Local Dense Embedding Model">
+          <svg class="badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <span class="badge-label">Embedding:</span>
+          <span class="badge-value">all-MiniLM-L6-v2</span>
+        </div>
+        <div class="system-badge" id="badge-milestone" title="Target Workshop Schedule Date">
+          <svg class="badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+          <span class="badge-label">Workshop Date:</span>
+          <span class="badge-value" id="header-workshop-date">Next Friday</span>
+        </div>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="header-right">
+        <button class="btn btn-secondary btn-sm" id="btn-open-new-task-modal">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          <span>Manual Task</span>
+        </button>
+        <button class="btn btn-outline btn-sm" id="btn-clear-tasks" title="Clear all tasks from SQLite">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+          </svg>
+          <span>Clear All</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs Bar -->
+    <nav class="nav-bar">
+      <div class="tabs-container">
+        <button class="nav-tab active" id="tab-btn-agent" data-tab="tab-agent">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+          <span>AI Task Agent</span>
+          <span class="tab-chip chip-glow">Active</span>
+        </button>
+
+        <button class="nav-tab" id="tab-btn-tasks" data-tab="tab-tasks">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="14" y="14" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" />
+          </svg>
+          <span>Task Board (CRUD)</span>
+          <span class="tab-badge" id="tab-task-count">0</span>
+        </button>
+
+        <button class="nav-tab" id="tab-btn-notes" data-tab="tab-notes">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+          </svg>
+          <span>ChromaDB Project Notes</span>
+          <span class="tab-badge" id="tab-notes-count">7</span>
+        </button>
+
+        <button class="nav-tab" id="tab-btn-sandbox" data-tab="tab-sandbox">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 2 7 12 12 22 7 12 2" />
+            <polyline points="2 17 12 22 22 17" />
+            <polyline points="2 12 12 17 22 12" />
+          </svg>
+          <span>Tools Sandbox</span>
+        </button>
+      </div>
+
+      <!-- Quick Metrics Ribbon -->
+      <div class="metrics-ribbon">
+        <div class="metric-item">
+          <span class="metric-label">Tasks:</span>
+          <span class="metric-val" id="metric-total-tasks">0</span>
+        </div>
+        <div class="metric-divider"></div>
+        <div class="metric-item">
+          <span class="metric-label">Urgent:</span>
+          <span class="metric-val text-urgent" id="metric-urgent-tasks">0</span>
+        </div>
+        <div class="metric-divider"></div>
+        <div class="metric-item">
+          <span class="metric-label">Completed:</span>
+          <span class="metric-val text-success" id="metric-completion-rate">0%</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Views Area -->
+    <main class="main-content">
+      <!-- ================= TAB 1: AI Task Agent ================= -->
+      <section class="tab-content active" id="tab-agent">
+        <div class="agent-grid">
+          <!-- Chat & Workflow Column -->
+          <div class="chat-column">
+            <!-- Scenario Prompt Presets Ribbon -->
+            <div class="prompt-presets-bar">
+              <span class="presets-title">Quick Workshop Scenarios:</span>
+              <div class="preset-chips" id="preset-chips-container">
+                <button class="preset-chip" data-prompt="Create tasks for preparing the upcoming workshop: book the catering for our attendees with the vegan and allergy specs, test the AV equipment in room 302, get the speaker slides, and print the attendee badges by next Wednesday.">
+                  🚀 Full Workshop Prep
+                </button>
+                <button class="preset-chip" data-prompt="Please organize all catering tasks for the workshop: order breakfast, lunch buffet, and snacks keeping in mind our vegan, vegetarian, and peanut allergy attendees. Make sure the head count is finalized 3 days before.">
+                  🥗 Catering & Dietary Specs
+                </button>
+                <button class="preset-chip" data-prompt="We need to prepare Room 302 for the workshop. Schedule tasks to inspect the 4K dual projectors, test both presenter lavalier mics, set up the 50 power strips, and configure the InnovationHub-5G Wi-Fi.">
+                  🎙️ Room 302 AV & Tech Setup
+                </button>
+                <button class="preset-chip" data-prompt="Set up tasks to collect 16:9 slide decks from Dr. Aris Thorne, Maya Lin, and Dev Patel, review their code repos for Docker compatibility, and upload the offline models to the USB drives.">
+                  👨‍🏫 Speaker Slides & Labs
+                </button>
+              </div>
+            </div>
+
+            <!-- Chat Messages Log Container -->
+            <div class="chat-scroll-area" id="chat-messages-container">
+              <!-- Initial Welcome Message from Agent -->
+              <div class="chat-bubble agent-bubble">
+                <div class="bubble-avatar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                </div>
+                <div class="bubble-body">
+                  <div class="bubble-header">
+                    <span class="bubble-author">TaskMind Agent</span>
+                    <span class="bubble-time">Just now</span>
+                  </div>
+                  <div class="bubble-text">
+                    <p>Hello! I am your <strong>Workshop Task Management Agent</strong>. Tell me what needs to be organized for the upcoming workshop.</p>
+                    <p class="bubble-hint">
+                      I will automatically:
+                    </p>
+                    <ul class="bubble-checklist">
+                      <li>Query <strong>ChromaDB</strong> for relevant workshop project notes (venue specs, catering constraints, speaker guidelines) using <code>all-MiniLM-L6-v2</code> embeddings</li>
+                      <li>Decompose your request into distinct structured tasks enriched with exact specifications</li>
+                      <li>Resolve accurate deadlines with the <strong>Date Parser</strong> tool</li>
+                      <li>Classify urgency with the <strong>Priority Classifier</strong> tool</li>
+                      <li>Present an interactive proposal for your <strong>confirmation</strong> before creating them in the database!</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Chat Input Box -->
+            <div class="chat-input-wrapper">
+              <form class="chat-input-form" id="chat-form">
+                <textarea 
+                  class="chat-textarea" 
+                  id="chat-input-text" 
+                  rows="2" 
+                  placeholder="Ask to create tasks for the workshop (e.g. 'Book vegan catering, test Room 302 dual projectors, collect speaker slides by next Wednesday')..."
+                  required
+                ></textarea>
+                <div class="chat-input-controls">
+                  <div class="input-tool-hints">
+                    <span class="hint-pill">Vector Search Active</span>
+                    <span class="hint-pill">Date Parser Ready</span>
+                    <span class="hint-pill">Confirmation Gate Enabled</span>
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-send" id="btn-submit-chat">
+                    <span>Generate Tasks</span>
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="22" y1="2" x2="11" y2="13" />
+                      <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                    </svg>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Agent Live Reasoning & Active Proposal Sidecar -->
+          <aside class="agent-sidecar">
+            <div class="sidecar-card">
+              <div class="sidecar-header">
+                <div class="sidecar-title">
+                  <svg class="sidecar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                  </svg>
+                  <span>Agent Execution Trace</span>
+                </div>
+                <span class="pulse-indicator"></span>
+              </div>
+              <div class="sidecar-body" id="agent-steps-feed">
+                <div class="step-card step-idle">
+                  <div class="step-bullet">1</div>
+                  <div class="step-content">
+                    <div class="step-title">ChromaDB Vector Retrieval</div>
+                    <div class="step-desc">Awaiting user input to query semantic notes...</div>
+                  </div>
+                </div>
+                <div class="step-card step-idle">
+                  <div class="step-bullet">2</div>
+                  <div class="step-content">
+                    <div class="step-title">Task Decomposition</div>
+                    <div class="step-desc">Will extract action items and match workshop notes...</div>
+                  </div>
+                </div>
+                <div class="step-card step-idle">
+                  <div class="step-bullet">3</div>
+                  <div class="step-content">
+                    <div class="step-title">Date Parser & Priority Classifier</div>
+                    <div class="step-desc">Will resolve deadlines and analyze urgency...</div>
+                  </div>
+                </div>
+                <div class="step-card step-idle">
+                  <div class="step-bullet">4</div>
+                  <div class="step-content">
+                    <div class="step-title">Confirmation Gate</div>
+                    <div class="step-desc">Waits for user approval before Task CRUD API commit.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ChromaDB Quick Vector Context Card -->
+            <div class="sidecar-card">
+              <div class="sidecar-header">
+                <div class="sidecar-title">
+                  <svg class="sidecar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                  </svg>
+                  <span>ChromaDB Context Match</span>
+                </div>
+              </div>
+              <div class="sidecar-body" id="sidecar-retrieved-notes">
+                <div class="empty-sidecar-text">No vector queries executed yet. Submit a prompt or click a preset to see retrieved workshop notes.</div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ================= TAB 2: Task Board (CRUD) ================= -->
+      <section class="tab-content" id="tab-tasks">
+        <!-- Filter and Search Toolbar -->
+        <div class="toolbar-card">
+          <div class="toolbar-left">
+            <div class="search-input-box">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input type="text" id="task-filter-search" placeholder="Search tasks by title, note, or tag..." />
+            </div>
+
+            <div class="filter-group">
+              <label for="task-filter-priority" class="filter-label">Priority:</label>
+              <select id="task-filter-priority" class="filter-select">
+                <option value="all">All Priorities</option>
+                <option value="Urgent">Urgent</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label for="task-filter-category" class="filter-label">Category:</label>
+              <select id="task-filter-category" class="filter-select">
+                <option value="all">All Categories</option>
+                <option value="Catering">Catering</option>
+                <option value="Venue & AV">Venue & AV</option>
+                <option value="Content & Speakers">Content & Speakers</option>
+                <option value="Logistics">Logistics</option>
+                <option value="Marketing & Comms">Marketing & Comms</option>
+                <option value="General">General</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="toolbar-right">
+            <div class="view-switcher">
+              <button class="view-btn active" id="view-btn-kanban" title="Kanban Board View">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="7" height="18" rx="1" />
+                  <rect x="14" y="3" width="7" height="10" rx="1" />
+                </svg>
+                <span>Kanban</span>
+              </button>
+              <button class="view-btn" id="view-btn-table" title="Table View">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="8" y1="6" x2="21" y2="6" />
+                  <line x1="8" y1="12" x2="21" y2="12" />
+                  <line x1="8" y1="18" x2="21" y2="18" />
+                  <line x1="3" y1="6" x2="3.01" y2="6" />
+                  <line x1="3" y1="12" x2="3.01" y2="12" />
+                  <line x1="3" y1="18" x2="3.01" y2="18" />
+                </svg>
+                <span>Table</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Kanban Board View Container -->
+        <div class="kanban-view" id="kanban-container">
+          <!-- Column 1: Pending -->
+          <div class="kanban-column" id="col-pending">
+            <div class="kanban-col-header">
+              <div class="col-title-wrap">
+                <span class="col-status-indicator status-pending"></span>
+                <span class="col-title">Pending</span>
+                <span class="col-counter" id="count-pending">0</span>
+              </div>
+            </div>
+            <div class="kanban-cards-list" id="cards-pending">
+              <div class="empty-col-message">No pending tasks</div>
+            </div>
+          </div>
+
+          <!-- Column 2: In Progress -->
+          <div class="kanban-column" id="col-in_progress">
+            <div class="kanban-col-header">
+              <div class="col-title-wrap">
+                <span class="col-status-indicator status-in-progress"></span>
+                <span class="col-title">In Progress</span>
+                <span class="col-counter" id="count-in_progress">0</span>
+              </div>
+            </div>
+            <div class="kanban-cards-list" id="cards-in_progress">
+              <div class="empty-col-message">No tasks in progress</div>
+            </div>
+          </div>
+
+          <!-- Column 3: Completed -->
+          <div class="kanban-column" id="col-completed">
+            <div class="kanban-col-header">
+              <div class="col-title-wrap">
+                <span class="col-status-indicator status-completed"></span>
+                <span class="col-title">Completed</span>
+                <span class="col-counter" id="count-completed">0</span>
+              </div>
+            </div>
+            <div class="kanban-cards-list" id="cards-completed">
+              <div class="empty-col-message">No completed tasks yet</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table View Container -->
+        <div class="table-view hidden" id="table-container">
+          <div class="table-responsive">
+            <table class="data-table" id="tasks-table">
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Task Title</th>
+                  <th>Priority</th>
+                  <th>Category</th>
+                  <th>Due Date</th>
+                  <th>ChromaDB References</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tasks-table-body">
+                <tr>
+                  <td colspan="7" class="text-center py-6 text-muted">No tasks available.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 3: ChromaDB Project Notes ================= -->
+      <section class="tab-content" id="tab-notes">
+        <div class="notes-layout">
+          <!-- Left: Notes Header & Semantic Search Live Tester -->
+          <div class="notes-sidebar">
+            <div class="card notes-search-card">
+              <h3 class="card-title">
+                <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <span>Semantic Vector Search</span>
+              </h3>
+              <p class="card-subtitle">
+                Test dense retrieval directly against ChromaDB using <code>all-MiniLM-L6-v2</code> 384-dimensional cosine embeddings.
+              </p>
+              <form id="notes-search-form" class="notes-search-form">
+                <input 
+                  type="text" 
+                  id="notes-search-input" 
+                  class="form-input" 
+                  placeholder="e.g., 'vegan dietary count' or 'projector mic setup'..."
+                  required
+                />
+                <button type="submit" class="btn btn-primary btn-block" id="btn-run-vector-search">
+                  <span>Search Vector DB</span>
+                </button>
+              </form>
+
+              <!-- Live Vector Search Results Box -->
+              <div class="vector-search-results hidden" id="vector-search-results-box">
+                <div class="results-header">
+                  <span>Ranked Matches</span>
+                  <button class="btn-link" id="btn-clear-vector-search">Clear</button>
+                </div>
+                <div class="results-list" id="vector-search-results-list"></div>
+              </div>
+            </div>
+
+            <!-- Add New Note Card -->
+            <div class="card add-note-card">
+              <h3 class="card-title">
+                <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                <span>Add Workshop Project Note</span>
+              </h3>
+              <form id="add-note-form">
+                <div class="form-group">
+                  <label for="new-note-title" class="form-label">Note Title</label>
+                  <input type="text" id="new-note-title" class="form-input" placeholder="e.g., Sponsor Booth Specs" required />
+                </div>
+                <div class="form-group">
+                  <label for="new-note-category" class="form-label">Category</label>
+                  <select id="new-note-category" class="form-input">
+                    <option value="Venue & AV">Venue & AV</option>
+                    <option value="Catering">Catering</option>
+                    <option value="Content & Speakers">Content & Speakers</option>
+                    <option value="Logistics">Logistics</option>
+                    <option value="Marketing & Comms">Marketing & Comms</option>
+                    <option value="Finance">Finance</option>
+                    <option value="General">General</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="new-note-content" class="form-label">Note Content (Embedded into ChromaDB)</label>
+                  <textarea id="new-note-content" class="form-textarea" rows="3" placeholder="Detailed specifications, contacts, requirements..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-secondary btn-block" id="btn-save-note">
+                  <span>Embed & Save to ChromaDB</span>
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Right: Stored Workshop Notes Grid -->
+          <div class="notes-main">
+            <div class="notes-main-header">
+              <div>
+                <h2 class="section-heading">ChromaDB Collection: <span class="gradient-text">workshop_project_notes</span></h2>
+                <p class="section-subtext">These persistent project notes guide the agent when enriching tasks with specifications and constraints.</p>
+              </div>
+              <span class="badge badge-info" id="notes-total-badge">7 Total Notes</span>
+            </div>
+
+            <div class="notes-cards-grid" id="notes-cards-grid">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 4: Tools Sandbox ================= -->
+      <section class="tab-content" id="tab-sandbox">
+        <div class="sandbox-grid">
+          <!-- Sandbox Tool 1: Date Parser -->
+          <div class="card sandbox-card">
+            <div class="card-header">
+              <div class="card-title-wrap">
+                <div class="tool-badge-pill">Tool 1</div>
+                <h3 class="card-title">Date Parser Sandbox</h3>
+              </div>
+            </div>
+            <p class="card-subtitle">
+              Tests natural language date extraction, workshop milestone relative offsets (e.g. <code>T-3 days</code>, <code>48 hours prior</code>), and calendar resolution.
+            </p>
+            <form id="sandbox-date-form">
+              <div class="form-group">
+                <label for="sandbox-date-input" class="form-label">Input Natural Language Phrase</label>
+                <input 
+                  type="text" 
+                  id="sandbox-date-input" 
+                  class="form-input" 
+                  value="book the catering by next Wednesday at 5pm" 
+                  required 
+                />
+              </div>
+              <div class="quick-examples">
+                <span class="ex-label">Try:</span>
+                <button type="button" class="ex-pill" data-target="sandbox-date-input">next Monday 9am</button>
+                <button type="button" class="ex-pill" data-target="sandbox-date-input">3 days before workshop</button>
+                <button type="button" class="ex-pill" data-target="sandbox-date-input">48 hours prior</button>
+                <button type="button" class="ex-pill" data-target="sandbox-date-input">in 4 days</button>
+              </div>
+              <button type="submit" class="btn btn-primary mt-4" id="btn-test-date-parser">
+                <span>Parse Date</span>
+              </button>
+            </form>
+
+            <div class="sandbox-result-box" id="sandbox-date-result">
+              <div class="result-placeholder">Click 'Parse Date' to view structured extraction.</div>
+            </div>
+          </div>
+
+          <!-- Sandbox Tool 2: Priority Classifier -->
+          <div class="card sandbox-card">
+            <div class="card-header">
+              <div class="card-title-wrap">
+                <div class="tool-badge-pill">Tool 2</div>
+                <h3 class="card-title">Priority Classifier Sandbox</h3>
+              </div>
+            </div>
+            <p class="card-subtitle">
+              Evaluates urgency keywords, safety & dietary compliance, infrastructure impact (AV, projector), and deadline proximity.
+            </p>
+            <form id="sandbox-priority-form">
+              <div class="form-group">
+                <label for="sandbox-priority-title" class="form-label">Task Title</label>
+                <input 
+                  type="text" 
+                  id="sandbox-priority-title" 
+                  class="form-input" 
+                  value="URGENT: Verify nut-free meals for attendee with severe airborne peanut allergy" 
+                  required 
+                />
+              </div>
+              <div class="form-group">
+                <label for="sandbox-priority-category" class="form-label">Category</label>
+                <select id="sandbox-priority-category" class="form-input">
+                  <option value="Catering">Catering</option>
+                  <option value="Venue & AV">Venue & AV</option>
+                  <option value="Content & Speakers">Content & Speakers</option>
+                  <option value="Logistics">Logistics</option>
+                  <option value="Marketing & Comms">Marketing & Comms</option>
+                  <option value="General">General</option>
+                </select>
+              </div>
+              <div class="quick-examples">
+                <span class="ex-label">Try:</span>
+                <button type="button" class="ex-pill-p" data-title="AV test run for Room 302 4K projectors" data-cat="Venue & AV">AV Dry Run</button>
+                <button type="button" class="ex-pill-p" data-title="Optional: design attendee sticker swag" data-cat="Logistics">Stickers (Optional)</button>
+                <button type="button" class="ex-pill-p" data-title="Send post-event feedback survey" data-cat="Marketing & Comms">Survey</button>
+              </div>
+              <button type="submit" class="btn btn-primary mt-4" id="btn-test-priority-classifier">
+                <span>Classify Priority</span>
+              </button>
+            </form>
+
+            <div class="sandbox-result-box" id="sandbox-priority-result">
+              <div class="result-placeholder">Click 'Classify Priority' to view semantic rating and reasoning.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal: Manual Task Creation -->
+  <div class="modal-backdrop hidden" id="modal-task-form">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 class="modal-title">Create New Task</h3>
+        <button class="modal-close-btn" id="btn-close-task-modal">&times;</button>
+      </div>
+      <form id="form-create-task" class="modal-form">
+        <div class="form-group">
+          <label for="modal-input-title" class="form-label">Task Title</label>
+          <input type="text" id="modal-input-title" class="form-input" placeholder="e.g. Inspect Room 302 HDMI Cables" required />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="modal-input-category" class="form-label">Category</label>
+            <select id="modal-input-category" class="form-input">
+              <option value="Venue & AV">Venue & AV</option>
+              <option value="Catering">Catering</option>
+              <option value="Content & Speakers">Content & Speakers</option>
+              <option value="Logistics">Logistics</option>
+              <option value="Marketing & Comms">Marketing & Comms</option>
+              <option value="General">General</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="modal-input-priority" class="form-label">Priority</label>
+            <select id="modal-input-priority" class="form-input">
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+              <option value="Urgent">Urgent</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="modal-input-due" class="form-label">Due Date (Natural language or YYYY-MM-DD)</label>
+          <input type="text" id="modal-input-due" class="form-input" placeholder="e.g. 2 days before workshop or next Friday" />
+        </div>
+        <div class="form-group">
+          <label for="modal-input-desc" class="form-label">Detailed Description</label>
+          <textarea id="modal-input-desc" class="form-textarea" rows="3" placeholder="Context, requirements, notes..."></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" id="btn-cancel-task-modal">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btn-submit-task-modal">Save Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Existing Task -->
+  <div class="modal-backdrop hidden" id="modal-edit-task">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 class="modal-title">Edit Task</h3>
+        <button class="modal-close-btn" id="btn-close-edit-modal">&times;</button>
+      </div>
+      <form id="form-edit-task" class="modal-form">
+        <input type="hidden" id="edit-task-id" />
+        <div class="form-group">
+          <label for="edit-task-title" class="form-label">Task Title</label>
+          <input type="text" id="edit-task-title" class="form-input" required />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="edit-task-status" class="form-label">Status</label>
+            <select id="edit-task-status" class="form-input">
+              <option value="pending">Pending</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="edit-task-priority" class="form-label">Priority</label>
+            <select id="edit-task-priority" class="form-input">
+              <option value="Urgent">Urgent</option>
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="edit-task-category" class="form-label">Category</label>
+            <select id="edit-task-category" class="form-input">
+              <option value="Venue & AV">Venue & AV</option>
+              <option value="Catering">Catering</option>
+              <option value="Content & Speakers">Content & Speakers</option>
+              <option value="Logistics">Logistics</option>
+              <option value="Marketing & Comms">Marketing & Comms</option>
+              <option value="General">General</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="edit-task-due" class="form-label">Due Date</label>
+            <input type="text" id="edit-task-due" class="form-input" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="edit-task-desc" class="form-label">Description</label>
+          <textarea id="edit-task-desc" class="form-textarea" rows="3"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-danger" id="btn-delete-task-modal">Delete Task</button>
+          <button type="submit" class="btn btn-primary" id="btn-update-task-modal">Update Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Main Application Logic Script -->
+  <script src="/static/app.js"></script>
+</body>
+</html>
